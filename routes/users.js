@@ -7,17 +7,20 @@ const { authenticateUser } = require('../middleware/authenticate');
 
 // returns all users and filters out not needed attributes
 router.get('/', authenticateUser, asyncHandler(async(req,res,next) => {
-  let users = await User.findAll({
+  let user = await User.findOne({
+    where: {
+      emailAddress: req.currentUser.emailAddress,
+    },  
     attributes: ["id", "firstName", "lastName", "emailAddress"],
   });
-  res.status(200).json(users);
+  res.status(200).json(user);
 }));
 
 // create a new user if the required fields are valid
 router.post('/', asyncHandler(async(req,res,next) => {
   try {
     await User.create(req.body);
-    res.status(201).json({message:"Account created!"});
+    res.location("/").status(201).end();
   } catch (error) {
     if (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraint") {
       const errors = error.errors.map(error => error.message);

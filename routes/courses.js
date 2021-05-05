@@ -22,8 +22,8 @@ router.get('/', asyncHandler(async(req,res,next) => {
 // creates a new course if the required fields are valid
 router.post('/', authenticateUser, asyncHandler(async(req,res,next) => {
   try {
-    await Course.create(req.body);
-    res.status(201).end();
+    const course = await Course.create(req.body); 
+    res.status(201).location(`/${course.id}`).end();
   } catch (error) {
     if (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraint") {
       const errors = error.errors.map(error => error.message);
@@ -84,7 +84,7 @@ router.put('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
 
 // allows deleting a specific course with the :id value if all required fields are valid and user is the course teacher
 router.delete('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
-  const id = req = req.params.id;
+  const id = req.params.id;
   const course = await Course.findByPk(id);
   if (course) {
     if (req.currentUser.id === course.userId) {
