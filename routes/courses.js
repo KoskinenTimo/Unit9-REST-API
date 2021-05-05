@@ -7,7 +7,7 @@ const { authenticateUser } = require('../middleware/authenticate');
 // return all courses and filters out attributes that are not needed
 router.get('/', asyncHandler(async(req,res,next) => {
   const courses = await Course.findAll({
-    attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded"],
+    attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded", "userId"],
     include: [
       {
         model: User,
@@ -41,7 +41,7 @@ router.get('/:id', asyncHandler(async(req,res,next) => {
     where: {
       id: id,
     },
-    attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded"],
+    attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded", "userId"],
     include: [
       {
         model: User,
