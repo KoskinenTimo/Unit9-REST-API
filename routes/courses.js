@@ -4,6 +4,7 @@ const { Course, User } = require('../models');
 const { asyncHandler } = require('../middleware/async-handler');
 const { authenticateUser } = require('../middleware/authenticate');
 
+// return all courses and filters out attributes that are not needed
 router.get('/', asyncHandler(async(req,res,next) => {
   const courses = await Course.findAll({
     attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded"],
@@ -18,6 +19,7 @@ router.get('/', asyncHandler(async(req,res,next) => {
   res.status(200).json(courses);
 }));
 
+// creates a new course if the required fields are valid
 router.post('/', authenticateUser, asyncHandler(async(req,res,next) => {
   try {
     await Course.create(req.body);
@@ -32,22 +34,26 @@ router.post('/', authenticateUser, asyncHandler(async(req,res,next) => {
   }
 }));
 
+// returns a course with the :id value, return only needed values
 router.get('/:id', asyncHandler(async(req,res,next) => {
   const id = req.params.id;
   const course = await Course.findOne({
     where: {
       id: id,
     },
+    attributes: ["id", "title", "description", "estimatedTime", "materialsNeeded"],
     include: [
       {
         model: User,
         as: 'teacher',
+        attributes: ["id","firstName", "lastName", "emailAddress"],
       }
     ]
   });
   res.status(200).json(course);
 }));
 
+// allows updating a specific course with the :id value if all required fields are valid and user is the course teacher
 router.put('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
   try {
     const id = req.params.id;
@@ -61,10 +67,10 @@ router.put('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
         })
         res.status(204).end();
       } else {
-        res.status(403).json({message:"Only the course owner can update."})
+        res.status(403).json({message:"Only the course owner can update."});
       }
     } else {
-      res.status(404).json({message:`The course with id ${id} was not found.`})
+      res.status(404).json({message:`The course with id ${id} was not found.`});
     }
   } catch (error) {
     if (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraint") {
@@ -76,14 +82,24 @@ router.put('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
   }
 }));
 
+// allows deleting a specific course with the :id value if all required fields are valid and user is the course teacher
 router.delete('/:id', authenticateUser, asyncHandler(async(req,res,next) => {
   const id = req = req.params.id;
-  await Course.destroy({
-    where: {
-      id: id,
+  const course = await Course.findByPk(id);
+  if (course) {
+    if (req.currentUser.id === course.userId) {
+      await Course.destroy({
+        where: {
+          id: id,
+        }
+      })
+      res.status(204).end();
+    } else {
+      res.status(403).json({message:"Only the course owner can delete."});
     }
-  })
-  res.status(204).end();
+  } else {
+    res.status(404).json({message:`The course with id ${id} was not found.`});
+  }
 }));
 
 module.exports = router;

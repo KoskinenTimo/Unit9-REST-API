@@ -54,6 +54,8 @@ let server;
   try {
     await sequelize.authenticate();    
     console.log("Connection successful!");
+
+    // sync before starting to listen to the port
     await sequelize.sync();
     console.log("Sync successful!");
 
